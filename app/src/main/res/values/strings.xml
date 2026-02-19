@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">Secatron</string>
+    <string name="landing_title">CipherChat</string>
+    <string name="landing_subtitle">End-to-End Encrypted</string>
+    <string name="landing_username_label">Username</string>
+    <string name="landing_username_hint">Enter your username</string>
+    <string name="landing_enter_button">Enter Secure Chat</string>
+    <string name="landing_securing_connection">Securing Connection…</string>
+    <string name="landing_footer">Your messages are encrypted and only visible to you and your recipients</string>
+
+    <!-- Security Badges -->
+    <string name="badge_256_aes">256-bit AES</string>
+    <string name="badge_e2ee">E2EE</string>
+    <string name="badge_zero_knowledge">Zero Knowledge</string>
+
+    <!-- Session Select Screen -->
+    <string name="session_select_title">Select Session Type</string>
+    <string name="session_select_subtitle">Create a new secure session or join an existing one</string>
+    <string name="session_create_title">Create Session</string>
+    <string name="session_create_description">Start a new encrypted chat session and share the session ID</string>
+    <string name="session_join_title">Join Session</string>
+    <string name="session_join_description">Enter a session ID to join an existing encrypted chat</string>
+
+    <!-- Create Session Mode -->
+    <string name="create_session_title">Create New Session</string>
+    <string name="create_session_subtitle">A unique session ID will be generated for you</string>
+    <string name="create_session_info">Session will be secured with end-to-end encryption</string>
+    <string name="create_session_button">Generate &amp; Create Session</string>
+
+    <!-- Join Session Mode -->
+    <string name="join_session_title">Join Session</string>
+    <string name="join_session_subtitle">Enter the session ID shared with you</string>
+    <string name="join_session_id_label">Session ID</string>
+    <string name="join_session_id_hint">XXXXXXXX</string>
+    <string name="join_session_button">Join Encrypted Session</string>
+
+    <!-- Chat Room Screen -->
+    <string name="chat_room_session_id_label">Session ID</string>
+    <string name="chat_room_encrypted_label">End-to-End Encrypted</string>
+    <string name="chat_room_message_hint">Type an encrypted message…</string>
+    <string name="chat_room_footer">Messages are encrypted using 256-bit AES encryption</string>
+    <string name="chat_room_system_welcome">Welcome to session %1$s. All messages are end-to-end encrypted.</string>
+
+    <!-- Actions -->
+    <string name="action_back">Back</string>
+    <string name="action_leave">Leave</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_send">Send</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_session_id_copied">Session ID copied to clipboard</string>
+    <string name="toast_username_required">Please enter a username</string>
+    <string name="toast_session_id_required">Please enter a session ID</string>
+</resources>

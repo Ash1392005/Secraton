@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="slate_950">#020617</color>
+    <color name="slate_900">#0F172A</color>
+    <color name="slate_800">#1E293B</color>
+    <color name="slate_700">#334155</color>
+    <color name="slate_600">#475569</color>
+    <color name="slate_500">#64748B</color>
+    <color name="slate_400">#94A3B8</color>
+    <color name="slate_300">#CBD5E1</color>
+    <color name="slate_200">#E2E8F0</color>
+
+    <!-- Accent Colors -->
+    <color name="cyan_400">#06B6D4</color>
+    <color name="cyan_500">#0891B2</color>
+    <color name="cyan_600">#0E7490</color>
+
+    <color name="emerald_400">#10B981</color>
+    <color name="emerald_500">#059669</color>
+    <color name="emerald_600">#047857</color>
+
+    <color name="purple_400">#A855F7</color>
+
+    <!-- Functional Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+</resources>
