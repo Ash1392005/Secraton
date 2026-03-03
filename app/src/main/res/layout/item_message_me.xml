@@ -31,6 +31,35 @@
             android:gravity="center_vertical"
             android:padding="12dp">
 
+            <!-- Audio UI -->
+            <LinearLayout
+                android:id="@+id/layoutAudio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <ImageButton
+                    android:id="@+id/btnPlayPause"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_button_ghost"
+                    android:src="@drawable/ic_play"
+                    android:tint="#FFFFFF"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/tvAudioStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Voice Note"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Text UI -->
             <TextView
                 android:id="@+id/tvMessage"
                 android:layout_width="wrap_content"

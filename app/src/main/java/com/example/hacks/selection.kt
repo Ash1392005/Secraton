@@ -14,6 +14,8 @@ import android.text.format.Formatter
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -32,6 +34,7 @@ class selection : AppCompatActivity() {
     private lateinit var layoutModeJoin: LinearLayout
     private lateinit var tvUsername: TextView
     private lateinit var etSessionId: TextInputEditText
+    private lateinit var rgChatMode: RadioGroup
 
     private var currentMode = "SELECT"
     private var username: String? = null
@@ -48,6 +51,7 @@ class selection : AppCompatActivity() {
         layoutModeJoin = findViewById(R.id.layoutModeJoin)
         tvUsername = findViewById(R.id.tvUsername)
         etSessionId = findViewById(R.id.etSessionId)
+        rgChatMode = findViewById(R.id.rgChatMode)
 
         tvUsername.text = username ?: "Guest"
 
@@ -76,7 +80,8 @@ class selection : AppCompatActivity() {
         btnCreateSession.setOnClickListener {
             val ipAddress = getLocalIpAddress()
             if (ipAddress != null) {
-                startChat(ipAddress, true)
+                val isGroup = rgChatMode.checkedRadioButtonId == R.id.rbGroup
+                startChat(ipAddress, true, isGroup)
             } else {
                 Toast.makeText(this, "Connect to Wi-Fi first!", Toast.LENGTH_SHORT).show()
             }
@@ -85,7 +90,7 @@ class selection : AppCompatActivity() {
         btnJoinSession.setOnClickListener {
             val sessionId = etSessionId.text.toString().trim()
             if (sessionId.isNotEmpty()) {
-                startChat(sessionId, false)
+                startChat(sessionId, false, false)
             } else {
                 Toast.makeText(this, "Enter the Host IP", Toast.LENGTH_SHORT).show()
             }
@@ -144,10 +149,11 @@ class selection : AppCompatActivity() {
         }
     }
 
-    private fun startChat(sessionId: String, isCreator: Boolean) {
+    private fun startChat(sessionId: String, isCreator: Boolean, isGroup: Boolean) {
         val intent = Intent(this, ChatActivity::class.java)
         intent.putExtra("SESSION_ID", sessionId)
         intent.putExtra("IS_CREATOR", isCreator)
+        intent.putExtra("IS_GROUP", isGroup)
         intent.putExtra("USERNAME", username)
         startActivity(intent)
     }

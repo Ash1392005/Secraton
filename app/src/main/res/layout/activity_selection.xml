@@ -303,10 +303,39 @@
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center_horizontal"
                                 android:layout_marginBottom="24dp"
-                                android:text="A unique session ID will be generated for you"
+                                android:text="Select chat mode and create session"
                                 android:textAlignment="center"
                                 android:textColor="#94A3B8"
                                 android:textSize="13sp" />
+
+                            <!-- Chat Mode Selection -->
+                            <RadioGroup
+                                android:id="@+id/rgChatMode"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginBottom="24dp"
+                                android:orientation="horizontal"
+                                android:gravity="center">
+
+                                <RadioButton
+                                    android:id="@+id/rbPrivate"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Private (1:1)"
+                                    android:textColor="#FFFFFF"
+                                    android:buttonTint="#06B6D4"
+                                    android:checked="true" />
+
+                                <RadioButton
+                                    android:id="@+id/rbGroup"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Group Chat"
+                                    android:textColor="#FFFFFF"
+                                    android:buttonTint="#06B6D4" />
+                            </RadioGroup>
 
                             <!-- Info Card -->
                             <androidx.cardview.widget.CardView
