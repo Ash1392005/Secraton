@@ -1,5 +1,6 @@
 package com.example.hacks
 
+import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
@@ -7,9 +8,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.RecyclerView
+import java.io.File
 
 class ChatAdapter(private val messages: MutableList<ChatMessage>, private val myUsername: String) :
     RecyclerView.Adapter<ChatAdapter.MessageViewHolder>() {
@@ -28,6 +32,8 @@ class ChatAdapter(private val messages: MutableList<ChatMessage>, private val my
         val layoutAudio: LinearLayout = view.findViewById(R.id.layoutAudio)
         val btnPlayPause: ImageButton = view.findViewById(R.id.btnPlayPause)
         val tvAudioStatus: TextView = view.findViewById(R.id.tvAudioStatus)
+        val layoutFile: LinearLayout = view.findViewById(R.id.layoutFile)
+        val tvFileName: TextView = view.findViewById(R.id.tvFileName)
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -43,21 +49,32 @@ class ChatAdapter(private val messages: MutableList<ChatMessage>, private val my
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val message = messages[position]
         
-        if (message.isAudio) {
-            holder.tvMessage.visibility = View.GONE
-            holder.layoutAudio.visibility = View.VISIBLE
-            
-            val isPlaying = currentlyPlayingPath == message.audioPath && mediaPlayer?.isPlaying == true
-            holder.btnPlayPause.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
-            holder.tvAudioStatus.text = if (isPlaying) "Playing..." else "Voice Note"
-            
-            holder.btnPlayPause.setOnClickListener {
-                toggleAudio(message.audioPath, holder, position)
+        // Reset visibility
+        holder.tvMessage.visibility = View.GONE
+        holder.layoutAudio.visibility = View.GONE
+        holder.layoutFile.visibility = View.GONE
+
+        when {
+            message.isAudio -> {
+                holder.layoutAudio.visibility = View.VISIBLE
+                val isPlaying = currentlyPlayingPath == message.audioPath && mediaPlayer?.isPlaying == true
+                holder.btnPlayPause.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+                holder.tvAudioStatus.text = if (isPlaying) "Playing..." else "Voice Note"
+                holder.btnPlayPause.setOnClickListener {
+                    toggleAudio(message.audioPath, holder, position)
+                }
             }
-        } else {
-            holder.tvMessage.visibility = View.VISIBLE
-            holder.layoutAudio.visibility = View.GONE
-            holder.tvMessage.text = message.text
+            message.isFile -> {
+                holder.layoutFile.visibility = View.VISIBLE
+                holder.tvFileName.text = message.fileName
+                holder.layoutFile.setOnClickListener {
+                    openFile(message.filePath, holder.itemView.context)
+                }
+            }
+            else -> {
+                holder.tvMessage.visibility = View.VISIBLE
+                holder.tvMessage.text = message.text
+            }
         }
         
         holder.tvSender.text = message.sender
@@ -75,7 +92,6 @@ class ChatAdapter(private val messages: MutableList<ChatMessage>, private val my
 
     private fun toggleAudio(path: String?, holder: MessageViewHolder, position: Int) {
         if (path == null) return
-
         if (currentlyPlayingPath == path) {
             if (mediaPlayer?.isPlaying == true) {
                 mediaPlayer?.pause()
@@ -87,10 +103,7 @@ class ChatAdapter(private val messages: MutableList<ChatMessage>, private val my
                 holder.tvAudioStatus.text = "Playing..."
             }
         } else {
-            // Stop previous
             stopAudio()
-            
-            // Play new
             try {
                 mediaPlayer = MediaPlayer().apply {
                     setDataSource(path)
@@ -106,9 +119,7 @@ class ChatAdapter(private val messages: MutableList<ChatMessage>, private val my
                 lastPlayedPosition = position
                 if (oldPos != -1) notifyItemChanged(oldPos)
                 notifyItemChanged(position)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            } catch (e: Exception) { e.printStackTrace() }
         }
     }
 
@@ -118,10 +129,25 @@ class ChatAdapter(private val messages: MutableList<ChatMessage>, private val my
         currentlyPlayingPath = null
     }
 
+    private fun openFile(path: String?, context: android.content.Context) {
+        if (path == null) return
+        try {
+            val file = File(path)
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.type = "*/*"
+            intent.putExtra(Intent.EXTRA_STREAM, uri)
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(Intent.createChooser(intent, "Share/Open File"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            android.widget.Toast.makeText(context, "Cannot open file", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun startCountdown(holder: MessageViewHolder, position: Int, seconds: Int) {
         val handler = Handler(Looper.getMainLooper())
         var remaining = seconds
-        
         val runnable = object : Runnable {
             override fun run() {
                 if (remaining > 0) {

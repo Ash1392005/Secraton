@@ -1,5 +1,7 @@
 package com.example.hacks
 
+import android.app.Activity
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.hardware.Sensor
@@ -8,7 +10,9 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.media.MediaPlayer
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.util.Base64
 import android.util.Log
 import android.view.View
@@ -17,6 +21,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -45,7 +50,10 @@ data class ChatMessage(
     val expiryTime: Int = 0,
     var timerStarted: Boolean = false,
     val isAudio: Boolean = false,
-    val audioPath: String? = null
+    val audioPath: String? = null,
+    val isFile: Boolean = false,
+    val fileName: String? = null,
+    val filePath: String? = null
 )
 
 class ChatActivity : AppCompatActivity(), SensorEventListener {
@@ -70,6 +78,7 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var etMessage: EditText
     private lateinit var btnSend: FloatingActionButton
     private lateinit var btnRecord: ImageButton
+    private lateinit var btnAttach: ImageButton
     private lateinit var tvStatus: TextView
     private lateinit var statusDot: View
 
@@ -91,6 +100,14 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
     private var audioFile: File? = null
     private var isRecording = false
 
+    private val filePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                sendFile(uri)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE, android.view.WindowManager.LayoutParams.FLAG_SECURE)
@@ -110,6 +127,7 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
         etMessage = findViewById(R.id.etMessage)
         btnSend = findViewById(R.id.btnSend)
         btnRecord = findViewById(R.id.btnRecord)
+        btnAttach = findViewById(R.id.btnAttach)
 
         adapter = ChatAdapter(messages, username ?: "Me")
         rvMessages.layoutManager = LinearLayoutManager(this)
@@ -139,6 +157,12 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
             btnTimer.imageTintList = if (currentTimerSeconds == 0) 
                 ColorStateList.valueOf(ContextCompat.getColor(this, android.R.color.darker_gray))
                 else ColorStateList.valueOf(ContextCompat.getColor(this, android.R.color.holo_orange_light))
+        }
+
+        btnAttach.setOnClickListener {
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "*/*"
+            filePickerLauncher.launch(intent)
         }
 
         btnRecord.setOnLongClickListener {
@@ -198,7 +222,6 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
             Toast.makeText(this, "Recording...", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(this, "Recording failed", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -208,7 +231,7 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
             mediaRecorder?.release()
             mediaRecorder = null
             isRecording = false
-            btnRecord.imageTintList = ColorStateList.valueOf(Color.parseColor("#94A3B8"))
+            btnRecord.imageTintList = ColorStateList.valueOf(Color.parseColor("#06B6D4"))
             
             if (audioFile != null && audioFile!!.exists()) {
                 sendAudio(audioFile!!)
@@ -241,12 +264,70 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
                 file.copyTo(displayFile)
 
                 runOnUiThread {
-                    addMessage("[Audio Message]", true, currentTimerSeconds, username ?: "Me", true, displayFile.absolutePath)
+                    addMessage("[Audio Message]", true, currentTimerSeconds, username ?: "Me", isAudio = true, audioPath = displayFile.absolutePath)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
+    }
+
+    private fun sendFile(uri: Uri) {
+        thread {
+            try {
+                val inputStream = contentResolver.openInputStream(uri)
+                val bytes = inputStream?.readBytes() ?: return@thread
+                inputStream.close()
+
+                val fileName = getFileName(uri) ?: "file_${System.currentTimeMillis()}"
+                
+                if (aesKey == null) return@thread
+                
+                val cipher = Cipher.getInstance("AES")
+                cipher.init(Cipher.ENCRYPT_MODE, aesKey)
+                val encrypted = cipher.doFinal(bytes)
+                val encStr = Base64.encodeToString(encrypted, Base64.NO_WRAP)
+                
+                val json = JSONObject()
+                json.put("type", "file")
+                json.put("name", fileName)
+                json.put("sender", username)
+                json.put("message", encStr)
+                json.put("timer", currentTimerSeconds)
+                
+                sendData(json.toString())
+                
+                // Save locally for display
+                val savedFile = File(cacheDir, fileName)
+                savedFile.writeBytes(bytes)
+
+                runOnUiThread {
+                    addMessage("[File: $fileName]", true, currentTimerSeconds, username ?: "Me", isFile = true, fileName = fileName, filePath = savedFile.absolutePath)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                runOnUiThread { Toast.makeText(this, "File too large or error", Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            cursor.use { c ->
+                if (c != null && c.moveToFirst()) {
+                    val index = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index != -1) result = c.getString(index)
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/') ?: -1
+            if (cut != -1) result = result?.substring(cut + 1)
+        }
+        return result
     }
 
     private fun handleEncryptedAudio(encStr: String, timer: Int, sender: String) {
@@ -261,10 +342,29 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
             audioFile.writeBytes(decrypted)
             
             runOnUiThread { 
-                addMessage("[Audio Message]", false, timer, sender, true, audioFile.absolutePath) 
+                addMessage("[Audio Message]", false, timer, sender, isAudio = true, audioPath = audioFile.absolutePath) 
             }
         } catch (e: Exception) {
             Log.e("Chat", "Decrypt audio error")
+        }
+    }
+
+    private fun handleEncryptedFile(encStr: String, fileName: String, timer: Int, sender: String) {
+        try {
+            if (aesKey == null) return
+            val encBytes = Base64.decode(encStr, Base64.NO_WRAP)
+            val cipher = Cipher.getInstance("AES")
+            cipher.init(Cipher.DECRYPT_MODE, aesKey)
+            val decrypted = cipher.doFinal(encBytes)
+            
+            val savedFile = File(cacheDir, fileName)
+            savedFile.writeBytes(decrypted)
+            
+            runOnUiThread { 
+                addMessage("[File: $fileName]", false, timer, sender, isFile = true, fileName = fileName, filePath = savedFile.absolutePath) 
+            }
+        } catch (e: Exception) {
+            Log.e("Chat", "Decrypt file error")
         }
     }
 
@@ -405,6 +505,17 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
                         }
                     }
                 }
+                "file" -> {
+                    val senderName = json.optString("sender")
+                    if (senderName != username) {
+                        handleEncryptedFile(json.getString("message"), json.getString("name"), json.optInt("timer", 0), senderName)
+                        if (isCreator) {
+                            synchronized(clientHandlers) {
+                                clientHandlers.filter { it != sender }.forEach { it.send(data) }
+                            }
+                        }
+                    }
+                }
             }
         } catch (e: Exception) {
             Log.e("Chat", "Parse error: ${e.message}")
@@ -494,8 +605,18 @@ class ChatActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
-    private fun addMessage(text: String, isMe: Boolean, timer: Int, sender: String, isAudio: Boolean = false, audioPath: String? = null) {
-        messages.add(ChatMessage(text, sender, isMe, timer, false, isAudio, audioPath))
+    private fun addMessage(
+        text: String, 
+        isMe: Boolean, 
+        timer: Int, 
+        sender: String, 
+        isAudio: Boolean = false, 
+        audioPath: String? = null,
+        isFile: Boolean = false,
+        fileName: String? = null,
+        filePath: String? = null
+    ) {
+        messages.add(ChatMessage(text, sender, isMe, timer, false, isAudio, audioPath, isFile, fileName, filePath))
         adapter.notifyItemInserted(messages.size - 1)
         rvMessages.scrollToPosition(messages.size - 1)
     }

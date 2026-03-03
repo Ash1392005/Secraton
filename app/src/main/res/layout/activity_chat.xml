@@ -155,6 +155,16 @@
                     android:padding="10dp"
                     tools:ignore="UseAppTint" />
 
+                <ImageButton
+                    android:id="@+id/btnAttach"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_button_ghost"
+                    android:src="@drawable/ic_attach"
+                    android:tint="#94A3B8"
+                    android:padding="10dp"
+                    tools:ignore="UseAppTint" />
+
                 <EditText
                     android:id="@+id/etMessage"
                     android:layout_width="0dp"

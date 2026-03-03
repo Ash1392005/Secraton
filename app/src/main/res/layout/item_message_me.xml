@@ -59,6 +59,33 @@
                     android:textSize="14sp" />
             </LinearLayout>
 
+            <!-- File UI -->
+            <LinearLayout
+                android:id="@+id/layoutFile"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_attach"
+                    app:tint="#FFFFFF" />
+
+                <TextView
+                    android:id="@+id/tvFileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:maxWidth="200dp"
+                    android:text="filename.ext"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="italic" />
+            </LinearLayout>
+
             <!-- Text UI -->
             <TextView
                 android:id="@+id/tvMessage"
